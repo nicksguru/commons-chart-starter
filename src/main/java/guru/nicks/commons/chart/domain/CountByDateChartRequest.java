@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 
@@ -24,6 +25,12 @@ public record CountByDateChartRequest(
 
         @NotNull
         DateScale dateScale,
+
+        /**
+         * Timezone for date truncation.
+         */
+        @NotNull
+        ZoneId zoneId,
 
         @Min(ChartService.MIN_IMAGE_DIMENSION)
         @Max(ChartService.MAX_IMAGE_DIMENSION)

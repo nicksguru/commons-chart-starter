@@ -9,15 +9,11 @@ import org.jfree.data.time.Year;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Date;
-import java.util.TimeZone;
 
 /**
  * Date scale for grouping orders in statistics. The dates are truncated, accordingly, to the beginning of the
  * day/week/month/year.
- * <p>
- * To avoid discrepancies, please treat local dates as {@link DateScale#TIME_ZONE}.
  */
 public enum DateScale {
 
@@ -41,17 +37,15 @@ public enum DateScale {
      */
     YEARLY;
 
-    public static final ZoneId ZONE_ID = ZoneOffset.UTC;
-    public static final TimeZone TIME_ZONE = TimeZone.getTimeZone(ZONE_ID);
-
     /**
      * Adds a count for the given date to the time series. If the period already exists, adds the count to it.
      *
      * @param timeSeries  time series to add to
      * @param countByDate date and count
+     * @param zoneId      timezone for date truncation
      */
-    public void addToTimeSeries(TimeSeries timeSeries, CountByDate countByDate) {
-        RegularTimePeriod timePeriod = truncateToRegularTimePeriod(countByDate.date());
+    public void addToTimeSeries(TimeSeries timeSeries, CountByDate countByDate, ZoneId zoneId) {
+        RegularTimePeriod timePeriod = truncateToRegularTimePeriod(countByDate.date(), zoneId);
 
         double count = (timeSeries.getDataItem(timePeriod) != null)
                 ? timeSeries.getDataItem(timePeriod).getValue().doubleValue()
@@ -61,16 +55,18 @@ public enum DateScale {
     }
 
     /**
-     * Converts the date to a {@link RegularTimePeriod} (beginning of day/week/month/year in {@link #ZONE_ID}). For
-     * putting it in a {@link TimeSeries}, consider calling {@link #addToTimeSeries(TimeSeries, CountByDate)} because it
-     * handles date duplicates smartly.
+     * Converts the date to a {@link RegularTimePeriod} (beginning of day/week/month/year). For putting it in a
+     * {@link TimeSeries}, consider calling {@link #addToTimeSeries(TimeSeries, CountByDate, ZoneId)} because it handles
+     * date duplicates smartly.
      *
+     * @param date   date to convert
+     * @param zoneId timezone for date truncation
      * @return beginning of day/week/month/year
      */
-    public RegularTimePeriod truncateToRegularTimePeriod(LocalDate date) {
+    public RegularTimePeriod truncateToRegularTimePeriod(LocalDate date, ZoneId zoneId) {
         // convert to 00:00:00
         Date utilDate = Date.from(
-                date.atStartOfDay(ZONE_ID).toInstant());
+                date.atStartOfDay(zoneId).toInstant());
 
         return switch (this) {
             case DAILY -> new Day(utilDate);

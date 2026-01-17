@@ -7,8 +7,6 @@ import java.time.LocalDate;
 /**
  * Represents the count of something (e.g., orders) for a specific (possibly truncated to the beginning of
  * week/month/year) date, depending on the specified {@link DateScale}.
- * <p>
- * To avoid discrepancies, please treat the {@link #date} as {@link DateScale#TIME_ZONE}.
  *
  */
 @Builder(toBuilder = true)

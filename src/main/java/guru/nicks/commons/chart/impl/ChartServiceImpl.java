@@ -3,7 +3,6 @@ package guru.nicks.commons.chart.impl;
 
 import guru.nicks.commons.chart.domain.CountByDate;
 import guru.nicks.commons.chart.domain.CountByDateChartRequest;
-import guru.nicks.commons.chart.domain.DateScale;
 import guru.nicks.commons.chart.service.ChartService;
 import guru.nicks.commons.validation.AnnotationValidator;
 
@@ -35,6 +34,7 @@ import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.TimeZone;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -52,19 +52,20 @@ public class ChartServiceImpl implements ChartService {
             throws IOException {
         // instead of @Valid which may not be enabled by default
         annotationValidator.validate(request);
+        TimeZone timezone = TimeZone.getTimeZone(request.zoneId());
         log.debug("Generating PNG chart for {} data points: {}", request.data().size(), request);
 
         // create separate datasets for each series - to enable different renderers
         var barSeries = new TimeSeries(request.yAxisLabel());
-        var barDataset = new TimeSeriesCollection(barSeries, DateScale.TIME_ZONE);
+        var barDataset = new TimeSeriesCollection(barSeries, timezone);
 
         var lineSeries = new TimeSeries(request.trendTitle());
-        var lineDataset = new TimeSeriesCollection(lineSeries, DateScale.TIME_ZONE);
+        var lineDataset = new TimeSeriesCollection(lineSeries, timezone);
 
         // populate time series
         for (CountByDate dataItem : request.data()) {
-            request.dateScale().addToTimeSeries(barSeries, dataItem);
-            request.dateScale().addToTimeSeries(lineSeries, dataItem);
+            request.dateScale().addToTimeSeries(barSeries, dataItem, request.zoneId());
+            request.dateScale().addToTimeSeries(lineSeries, dataItem, request.zoneId());
         }
 
         JFreeChart chart = ChartFactory.createTimeSeriesChart(request.chartTitle(),
@@ -86,7 +87,7 @@ public class ChartServiceImpl implements ChartService {
         configureChartBackground(chart);
 
         configurePlot(plot);
-        configureXaxis(plot, request.dateLocale());
+        configureXaxis(plot, request.dateLocale(), timezone);
         configureYaxis(plot, countFormatter);
 
         plot.setRenderer(BAR_DATASET_INDEX, configureBarDatasetRenderer(countFormatter));
@@ -205,11 +206,11 @@ public class ChartServiceImpl implements ChartService {
      * @param plot       plot containing the X-axis
      * @param dateLocale locale for date formatting
      */
-    protected void configureXaxis(XYPlot plot, Locale dateLocale) {
+    protected void configureXaxis(XYPlot plot, Locale dateLocale, TimeZone timeZone) {
         // create custom with rotated tick labels (-45 degrees, for long and dense dates) and arrow
         // position the X axis label to the right of the chart (below the arrow)
         var xAxis = new ArrowRotatedDateAxis(plot.getDomainAxis().getLabel(), -Math.PI / 4,
-                dateLocale, DateScale.TIME_ZONE, true);
+                dateLocale, timeZone, true);
         plot.setDomainAxis(xAxis);
 
         // e.g. 'Jan 1, 2026'
