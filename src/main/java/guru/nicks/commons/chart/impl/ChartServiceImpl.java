@@ -216,13 +216,18 @@ public class ChartServiceImpl implements ChartService {
         // create custom with rotated tick labels (-45 degrees, for long and dense dates) and arrow
         // position the X axis label to the right of the chart (below the arrow)
         var xAxis = new ArrowRotatedDateAxis(plot.getDomainAxis().getLabel(), -Math.PI / 4,
-                dateLocale, timeZone, true);
+                timeZone, dateLocale, true);
+        // set the dataset so the axis can generate ticks only for dates present in the data
+        if (plot.getDataset(BAR_DATASET_INDEX) instanceof TimeSeriesCollection collection) {
+            xAxis.setDataset(collection);
+        }
+
         plot.setDomainAxis(xAxis);
 
         // e.g. 'Jan 1, 2026' (the month name is abbreviated)
         var dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, dateLocale);
-        // WARNING: without this, formatting Date objects (this is what this class is for) will default to UTC - because
-        // a Date is always in UTC
+        // WARNING: without this, formatting Date objects (this is what JFreeChart uses for date axes) will default to
+        // UTC - because a Date is always in UTC
         dateFormat.setTimeZone(timeZone);
         xAxis.setDateFormatOverride(dateFormat);
 

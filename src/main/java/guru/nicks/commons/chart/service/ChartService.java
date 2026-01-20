@@ -156,7 +156,9 @@ public interface ChartService {
     Polygon DEFAULT_POINT_SHAPE = new Polygon(new int[]{5, 0, -5, 0}, new int[]{0, 5, 0, -5}, 4);
 
     /**
-     * Generates a PNG chart of counts over time.
+     * Generates a PNG chart of counts over time. The dataset is displayed both as bars and as a line connecting the
+     * actual values. The X axis (date labels) is rotated for better readability, and only has ticks for the dates
+     * present in the dataset.
      *
      * @param request      chart generation parameters
      * @param outputStream output stream for PNG

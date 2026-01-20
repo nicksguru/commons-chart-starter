@@ -34,26 +34,26 @@ public class ArrowRotatedDateAxis extends RotatedDateAxis {
 
     public ArrowRotatedDateAxis(double rotationAngle) {
         super(rotationAngle);
-        this.labelOnRight = false;
-        this.arrowDirection = ArrowDirection.AUTO;
+        labelOnRight = false;
+        arrowDirection = ArrowDirection.AUTO;
     }
 
     public ArrowRotatedDateAxis(String label, double rotationAngle) {
         super(label, rotationAngle);
-        this.labelOnRight = false;
-        this.arrowDirection = ArrowDirection.AUTO;
+        labelOnRight = false;
+        arrowDirection = ArrowDirection.AUTO;
     }
 
     public ArrowRotatedDateAxis(String label, double rotationAngle, TimeZone timeZone) {
         super(label, rotationAngle, timeZone);
-        this.labelOnRight = false;
-        this.arrowDirection = ArrowDirection.AUTO;
+        labelOnRight = false;
+        arrowDirection = ArrowDirection.AUTO;
     }
 
-    public ArrowRotatedDateAxis(String label, double rotationAngle, Locale locale, TimeZone timeZone) {
-        super(label, rotationAngle, locale, timeZone);
-        this.labelOnRight = false;
-        this.arrowDirection = ArrowDirection.AUTO;
+    public ArrowRotatedDateAxis(String label, double rotationAngle, TimeZone timeZone, Locale locale) {
+        super(label, rotationAngle, timeZone, locale);
+        labelOnRight = false;
+        arrowDirection = ArrowDirection.AUTO;
     }
 
     /**
@@ -61,13 +61,13 @@ public class ArrowRotatedDateAxis extends RotatedDateAxis {
      *
      * @param label         the axis label
      * @param rotationAngle the angle for tick labels rotation
-     * @param locale        the locale
      * @param timeZone      the time zone
+     * @param locale        the locale
      * @param labelOnRight  if true, position the label to the right of the chart (below the arrow)
      */
-    public ArrowRotatedDateAxis(String label, double rotationAngle, Locale locale, TimeZone timeZone,
+    public ArrowRotatedDateAxis(String label, double rotationAngle, TimeZone timeZone, Locale locale,
             boolean labelOnRight) {
-        super(label, rotationAngle, locale, timeZone);
+        super(label, rotationAngle, timeZone, locale);
         this.labelOnRight = labelOnRight;
         this.arrowDirection = ArrowDirection.AUTO;
     }
@@ -77,13 +77,13 @@ public class ArrowRotatedDateAxis extends RotatedDateAxis {
      *
      * @param label          the axis label
      * @param rotationAngle  the angle for tick labels rotation
-     * @param locale         the locale
      * @param timeZone       the time zone
+     * @param locale         the locale
      * @param arrowDirection the direction in which the arrow should point
      */
-    public ArrowRotatedDateAxis(String label, double rotationAngle, Locale locale, TimeZone timeZone,
+    public ArrowRotatedDateAxis(String label, double rotationAngle, TimeZone timeZone, Locale locale,
             ArrowDirection arrowDirection) {
-        super(label, rotationAngle, locale, timeZone);
+        super(label, rotationAngle, timeZone, locale);
         this.labelOnRight = false;
         this.arrowDirection = arrowDirection;
     }
@@ -93,14 +93,14 @@ public class ArrowRotatedDateAxis extends RotatedDateAxis {
      *
      * @param label          the axis label
      * @param rotationAngle  the angle for tick labels rotation
-     * @param locale         the locale
      * @param timeZone       the time zone
+     * @param locale         the locale
      * @param labelOnRight   if true, position the label to the right of the chart (below the arrow)
      * @param arrowDirection the direction in which the arrow should point
      */
-    public ArrowRotatedDateAxis(String label, double rotationAngle, Locale locale, TimeZone timeZone,
+    public ArrowRotatedDateAxis(String label, double rotationAngle, TimeZone timeZone, Locale locale,
             boolean labelOnRight, ArrowDirection arrowDirection) {
-        super(label, rotationAngle, locale, timeZone);
+        super(label, rotationAngle, timeZone, locale);
         this.labelOnRight = labelOnRight;
         this.arrowDirection = arrowDirection;
     }
