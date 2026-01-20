@@ -6,6 +6,7 @@ import org.jfree.chart.axis.DateTick;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.TextAnchor;
 
+import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.Locale;
@@ -73,7 +74,7 @@ public class RotatedDateAxis extends DateAxis {
      * @return list of rotated ticks
      */
     @Override
-    protected List<DateTick> refreshTicksHorizontal(java.awt.Graphics2D g2, Rectangle2D dataArea, RectangleEdge edge) {
+    protected List<DateTick> refreshTicksHorizontal(Graphics2D g2, Rectangle2D dataArea, RectangleEdge edge) {
         // get ticks from parent class
         List<DateTick> parentTicks = super.refreshTicksHorizontal(g2, dataArea, edge);
 

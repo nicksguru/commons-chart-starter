@@ -2,6 +2,10 @@ package guru.nicks.commons.chart.service;
 
 import guru.nicks.commons.chart.domain.CountByDateChartRequest;
 
+import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.renderer.xy.XYSplineRenderer;
 import org.jfree.chart.ui.RectangleInsets;
 
 import java.awt.*;
@@ -13,9 +17,19 @@ import java.io.OutputStream;
  */
 public interface ChartService {
 
-
+    /**
+     * Width or height.
+     */
     int MIN_IMAGE_DIMENSION = 30;
-    int MAX_IMAGE_DIMENSION = 3000;
+
+    /**
+     * Width or height.
+     */
+    int MAX_IMAGE_DIMENSION = 2000;
+
+    /**
+     * Maximum number of data points.
+     */
     int MAX_DATA_POINTS = 1000;
 
     /**
@@ -71,7 +85,7 @@ public interface ChartService {
     Color DEFAULT_BAR_COLOR_SECONDARY = new Color(139, 92, 246);
 
     /**
-     * Default color for trend lines (rose red).
+     * Default color for trend lines (rose-red).
      */
     Color DEFAULT_LINE_COLOR = new Color(244, 63, 94);
 
@@ -111,7 +125,7 @@ public interface ChartService {
      *
      * @see #getBarMargin()
      */
-    double DEFAULT_BAR_MARGIN = 0.9;
+    double DEFAULT_BAR_MARGIN = 0.7;
 
     /**
      * Default alignment factor for bar positioning (0.5 = centered).
@@ -134,6 +148,8 @@ public interface ChartService {
 
     /**
      * Diamond-shaped point marker for line dataset data points.
+     * <p>
+     * WARNING: this object is a singleton and therefore must not be modified!
      *
      * @see #getPointShape()
      */
@@ -149,6 +165,15 @@ public interface ChartService {
     void generateCountByDatePngChart(CountByDateChartRequest request, OutputStream outputStream) throws IOException;
 
     /**
+     * Creates (but does not configure) a bar dataset renderer instance.
+     *
+     * @return bar dataset renderer
+     */
+    default XYBarRenderer createBarDatasetRenderer() {
+        return new XYBarRenderer(getBarMargin());
+    }
+
+    /**
      * Default implementation returns {@link #DEFAULT_BAR_COLOR_PRIMARY}.
      */
     default Color getBarColorPrimary() {
@@ -160,6 +185,19 @@ public interface ChartService {
      */
     default Color getBarColorSecondary() {
         return DEFAULT_BAR_COLOR_SECONDARY;
+    }
+
+    /**
+     * Creates (but does not configure) a line dataset renderer instance.
+     * <p>
+     * NOTE: {@link XYSplineRenderer} creates waves whose peaks go beyond the chart boundary. Also, such peaks are
+     * misleading - they don't represent actual data points and hint at a trend that doesn't exist (lower and higher
+     * values).
+     *
+     * @return line dataset renderer
+     */
+    default XYItemRenderer createLineDatasetRenderer() {
+        return new XYLineAndShapeRenderer();
     }
 
     /**

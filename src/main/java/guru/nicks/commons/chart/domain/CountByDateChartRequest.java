@@ -9,9 +9,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Request parameters for generating a count by date chart PNG.
@@ -27,10 +27,10 @@ public record CountByDateChartRequest(
         DateScale dateScale,
 
         /**
-         * Timezone for date truncation.
+         * Timezone for {@link CountByDate#date()}.
          */
         @NotNull
-        ZoneId zoneId,
+        TimeZone timeZone,
 
         @Min(ChartService.MIN_IMAGE_DIMENSION)
         @Max(ChartService.MAX_IMAGE_DIMENSION)

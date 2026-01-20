@@ -1,8 +1,8 @@
 package guru.nicks.commons.chart.impl;
 
-
 import guru.nicks.commons.chart.domain.CountByDate;
 import guru.nicks.commons.chart.domain.CountByDateChartRequest;
+import guru.nicks.commons.chart.domain.DateScale;
 import guru.nicks.commons.chart.service.ChartService;
 import guru.nicks.commons.validation.AnnotationValidator;
 
@@ -18,9 +18,8 @@ import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.block.BlockBorder;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYBarPainter;
-import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
-import org.jfree.chart.renderer.xy.XYSplineRenderer;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.ui.HorizontalAlignment;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.VerticalAlignment;
@@ -52,20 +51,23 @@ public class ChartServiceImpl implements ChartService {
             throws IOException {
         // instead of @Valid which may not be enabled by default
         annotationValidator.validate(request);
-        TimeZone timezone = TimeZone.getTimeZone(request.zoneId());
         log.debug("Generating PNG chart for {} data points: {}", request.data().size(), request);
 
         // create separate datasets for each series - to enable different renderers
         var barSeries = new TimeSeries(request.yAxisLabel());
-        var barDataset = new TimeSeriesCollection(barSeries, timezone);
+        var barDataset = new TimeSeriesCollection(barSeries, request.timeZone());
 
         var lineSeries = new TimeSeries(request.trendTitle());
-        var lineDataset = new TimeSeriesCollection(lineSeries, timezone);
+        var lineDataset = new TimeSeriesCollection(lineSeries, request.timeZone());
 
-        // populate time series
+        // populate time series, avoid calling these getters for all (numerous) data points
+        DateScale dateScale = request.dateScale();
+        TimeZone timeZone = request.timeZone();
+        Locale dateLocale = request.dateLocale();
+
         for (CountByDate dataItem : request.data()) {
-            request.dateScale().addToTimeSeries(barSeries, dataItem, request.zoneId());
-            request.dateScale().addToTimeSeries(lineSeries, dataItem, request.zoneId());
+            dateScale.addToTimeSeries(barSeries, dataItem, timeZone, dateLocale);
+            dateScale.addToTimeSeries(lineSeries, dataItem, timeZone, dateLocale);
         }
 
         JFreeChart chart = ChartFactory.createTimeSeriesChart(request.chartTitle(),
@@ -87,7 +89,7 @@ public class ChartServiceImpl implements ChartService {
         configureChartBackground(chart);
 
         configurePlot(plot);
-        configureXaxis(plot, request.dateLocale(), timezone);
+        configureXaxis(plot, request.dateLocale(), request.timeZone());
         configureYaxis(plot, countFormatter);
 
         plot.setRenderer(BAR_DATASET_INDEX, configureBarDatasetRenderer(countFormatter));
@@ -132,7 +134,7 @@ public class ChartServiceImpl implements ChartService {
      * @return configured renderer
      */
     protected XYItemRenderer configureBarDatasetRenderer(NumberFormat countFormatter) {
-        var renderer = new XYBarRenderer(getBarMargin());
+        var renderer = createBarDatasetRenderer();
         renderer.setBarAlignmentFactor(getBarAlignmentFactor());
 
         // add gradient paint to bars
@@ -157,21 +159,24 @@ public class ChartServiceImpl implements ChartService {
     }
 
     /**
-     * Creates and configures a spline line dataset renderer with diamond markers.
+     * Creates and configures a line dataset renderer with diamond markers.
      *
      * @return configured renderer
      */
     protected XYItemRenderer configureLineDatasetRenderer() {
-        // Connect points with a smooth line. More than default (5) control points are needed to avoid sharp corners
-        // if the number of points is small.
-        var renderer = new XYSplineRenderer(15);
+        var renderer = createLineDatasetRenderer();
         renderer.setSeriesPaint(0, getLineColor());
         renderer.setSeriesStroke(0, new BasicStroke(2.5F, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 
         // create diamond shape markers with fill
         renderer.setSeriesShape(0, getPointShape());
-        renderer.setSeriesShapesFilled(0, true);
-        renderer.setSeriesShapesVisible(0, true);
+
+        if (renderer instanceof XYLineAndShapeRenderer s) {
+            s.setSeriesShapesFilled(0, true);
+            s.setSeriesShapesVisible(0, true);
+        } else {
+            log.warn("Line renderer is not {}, shape configuration skipped", XYLineAndShapeRenderer.class.getName());
+        }
 
         renderer.setSeriesOutlinePaint(0, getLineColor());
         renderer.setSeriesOutlineStroke(0, new BasicStroke(2));
@@ -205,6 +210,7 @@ public class ChartServiceImpl implements ChartService {
      *
      * @param plot       plot containing the X-axis
      * @param dateLocale locale for date formatting
+     * @param timeZone   timezone for date formatting
      */
     protected void configureXaxis(XYPlot plot, Locale dateLocale, TimeZone timeZone) {
         // create custom with rotated tick labels (-45 degrees, for long and dense dates) and arrow
@@ -213,8 +219,12 @@ public class ChartServiceImpl implements ChartService {
                 dateLocale, timeZone, true);
         plot.setDomainAxis(xAxis);
 
-        // e.g. 'Jan 1, 2026'
-        xAxis.setDateFormatOverride(DateFormat.getDateInstance(DateFormat.MEDIUM, dateLocale));
+        // e.g. 'Jan 1, 2026' (the month name is abbreviated)
+        var dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM, dateLocale);
+        // WARNING: without this, formatting Date objects (this is what this class is for) will default to UTC - because
+        // a Date is always in UTC
+        dateFormat.setTimeZone(timeZone);
+        xAxis.setDateFormatOverride(dateFormat);
 
         xAxis.setTickLabelFont(new Font(getFontName(), Font.PLAIN, getTickLabelFontSize()));
         xAxis.setTickMarkPaint(getAxisGrayColor());
@@ -260,8 +270,16 @@ public class ChartServiceImpl implements ChartService {
         chart.setAntiAlias(true);
         chart.setTextAntiAlias(true);
 
-        BufferedImage image = chart.createBufferedImage(width, height);
-        ChartUtils.writeBufferedImageAsPNG(outputStream, image);
+        BufferedImage image = null;
+        try {
+            image = chart.createBufferedImage(width, height);
+            ChartUtils.writeBufferedImageAsPNG(outputStream, image);
+        } finally {
+            // release native resources
+            if (image != null) {
+                image.flush();
+            }
+        }
     }
 
 }

@@ -12,8 +12,9 @@ import org.jfree.data.time.Week;
 import org.jfree.data.time.Year;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import static guru.nicks.commons.validation.dsl.ValiDsl.checkNotNull;
 
@@ -53,23 +54,24 @@ public enum DateScale {
      *
      * @param timeSeries  time series to add to
      * @param countByDate date and count
-     * @param zoneId      timezone for date truncation
+     * @param timeZone    timezone for {@link CountByDate#date()}
+     * @param dateLocale  locale for dates
      */
     @ConstraintArguments
     public void addToTimeSeries(@Nonnull TimeSeries timeSeries, @Nonnull CountByDate countByDate,
-            @Nonnull ZoneId zoneId) {
+            @Nonnull TimeZone timeZone, @Nonnull Locale dateLocale) {
         checkNotNull(timeSeries, _DateScaleAddToTimeSeriesArgumentsMeta.TIMESERIES.name());
         checkNotNull(countByDate, _DateScaleAddToTimeSeriesArgumentsMeta.COUNTBYDATE.name());
-        checkNotNull(zoneId, _DateScaleAddToTimeSeriesArgumentsMeta.ZONEID.name());
 
-        if (countByDate.count() < 0) {
-            throw new IllegalArgumentException("Count cannot be negative: " + countByDate.count());
+        double count = countByDate.count();
+        if ((count < 0) || !Double.isFinite(count)) {
+            throw new IllegalArgumentException("Count field must be a finite non-negative number");
         }
 
-        RegularTimePeriod timePeriod = truncateToRegularTimePeriod(countByDate.date(), zoneId);
+        RegularTimePeriod timePeriod = truncateToRegularTimePeriod(countByDate.date(), timeZone, dateLocale);
         TimeSeriesDataItem dataItem = timeSeries.getDataItem(timePeriod);
 
-        double currentCount = (dataItem != null)
+        double currentCount = (dataItem != null) && (dataItem.getValue() != null)
                 ? dataItem.getValue().doubleValue()
                 : 0.0;
 
@@ -78,28 +80,31 @@ public enum DateScale {
 
     /**
      * Converts the date to a {@link RegularTimePeriod} (beginning of day/week/month/year). For putting it in a
-     * {@link TimeSeries}, consider calling {@link #addToTimeSeries(TimeSeries, CountByDate, ZoneId)} because it handles
-     * date duplicates smartly.
+     * {@link TimeSeries}, consider calling {@link #addToTimeSeries(TimeSeries, CountByDate, TimeZone, Locale)} because
+     * it handles date duplicates smartly.
      *
-     * @param date   date to convert
-     * @param zoneId timezone for date truncation
+     * @param date       date to convert
+     * @param timeZone   timezone for date truncation
+     * @param dateLocale locale for dates
      * @return beginning of day/week/month/year
      */
     @ConstraintArguments
-    public RegularTimePeriod truncateToRegularTimePeriod(@Nonnull LocalDate date, @Nonnull ZoneId zoneId) {
+    public RegularTimePeriod truncateToRegularTimePeriod(@Nonnull LocalDate date, @Nonnull TimeZone timeZone,
+            @Nonnull Locale dateLocale) {
         checkNotNull(date, _DateScaleTruncateToRegularTimePeriodArgumentsMeta.DATE.name());
-        checkNotNull(zoneId, _DateScaleTruncateToRegularTimePeriodArgumentsMeta.ZONEID.name());
+        checkNotNull(timeZone, _DateScaleTruncateToRegularTimePeriodArgumentsMeta.TIMEZONE.name());
+        checkNotNull(dateLocale, _DateScaleTruncateToRegularTimePeriodArgumentsMeta.DATELOCALE.name());
 
-        // convert to 00:00:00
+        // convert to 00:00:00 UTC, but keep the original time zone (see below)
         Date utilDate = Date.from(
-                date.atStartOfDay(zoneId).toInstant());
+                date.atStartOfDay(timeZone.toZoneId()).toInstant());
 
         return switch (this) {
-            case DAY -> new Day(utilDate);
-            case WEEK -> new Week(utilDate);
-            case MONTH -> new Month(utilDate);
-            case QUARTER -> new Quarter(utilDate);
-            case YEAR -> new Year(utilDate);
+            case DAY -> new Day(utilDate, timeZone, dateLocale);
+            case WEEK -> new Week(utilDate, timeZone, dateLocale);
+            case MONTH -> new Month(utilDate, timeZone, dateLocale);
+            case QUARTER -> new Quarter(utilDate, timeZone, dateLocale);
+            case YEAR -> new Year(utilDate, timeZone, dateLocale);
         };
 
     }
