@@ -6,7 +6,9 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.ui.RectangleEdge;
 
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Stroke;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 

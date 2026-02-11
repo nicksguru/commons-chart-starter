@@ -10,7 +10,7 @@ import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.text.DateFormat;
 import java.util.ArrayList;
