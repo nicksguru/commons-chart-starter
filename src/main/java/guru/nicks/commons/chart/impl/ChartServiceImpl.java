@@ -26,7 +26,10 @@ import org.jfree.chart.ui.VerticalAlignment;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GradientPaint;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
