@@ -15,6 +15,9 @@ import java.util.TimeZone;
 
 /**
  * Request parameters for generating a count by date chart PNG.
+ *
+ * @param timeZone   Timezone for {@link CountByDate#date()}
+ * @param dateLocale locale for date formatting
  */
 @Builder(toBuilder = true)
 public record CountByDateChartRequest(
@@ -26,9 +29,6 @@ public record CountByDateChartRequest(
         @NotNull
         DateScale dateScale,
 
-        /**
-         * Timezone for {@link CountByDate#date()}.
-         */
         @NotNull
         TimeZone timeZone,
 
@@ -40,9 +40,6 @@ public record CountByDateChartRequest(
         @Max(ChartService.MAX_IMAGE_DIMENSION)
         int height,
 
-        /**
-         * For date formatting.
-         */
         @NotNull
         Locale dateLocale,
 
